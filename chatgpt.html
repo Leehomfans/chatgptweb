@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<!-- saved from url=(0061)http://dmtest1.szsoule.com/ChatGpt/SubmitQuestionsPython.aspx -->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>
+        智能对话系统
+    </title>
+    <link rel="stylesheet" type="text/css" href="./static/layui.css">
+    <link rel="stylesheet" type="text/css" href="./static/glhtys.css">
+    <script type="text/javascript" src="./static/jquery-1.9.1.min.js"></script>
+    <script type="text/javascript" src="./static/layer.js"></script>
+    <link rel="stylesheet" href="./static/layer.css" id="layuicss-layer">
+    <script type="text/javascript" src="./static/WdatePicker.js"></script>
+    <link href="./static/WdatePicker.css" rel="stylesheet" type="text/css">
+    <link href="./static/WdatePicker.css" rel="stylesheet" type="text/css">
+    <script src="./static/jquery.boxy.js" type="text/javascript"></script>
+    <link href="./static/boxy.css" rel="stylesheet" type="text/css">
+    <style>
+        .chat-container {
+            margin: 10px 15px 15px;
+        }
+
+        .chat-box {
+            width: 1200px;
+            margin: 0 auto;
+        }
+
+        .chat-content {
+            padding: 20px 0;
+        }
+
+        .chat-content:hover {
+            background: #f0f0f0;
+            cursor: default;
+        }
+
+        .chat-content .head-img img {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            padding: 5px;
+        }
+
+        .request {
+            background: #f6f6f6;
+        }
+
+        .response {
+            background: #fafafa;
+        }
+
+        .clearfix {
+            clear: both;
+            *zoom: 1;
+        }
+
+        .clearfix::after {
+            content: "";
+            display: block;
+            clear: both;
+            width: 0;
+            height: 0;
+            overflow: hidden;
+        }
+
+        .head-img {
+            float: left;
+            margin-right: 20px;
+        }
+
+        .content-val {
+            float: left;
+            width: 1120px;
+            font-size: 16px;
+            line-height: 28px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 10px 0;
+        }
+
+        .input {
+            border: 1px solid #e6e6e6;
+            width: 1200px;
+            margin: 0 auto;
+            margin-bottom: 30px;
+            height: 50px;
+            line-height: 50px;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .input input {
+            font-size: 20px;
+            width: 1120px;
+            height: 50px;
+            line-height: 50px;
+            border: none;
+            vertical-align: text-bottom;
+            padding: 0 10px;
+        }
+
+        .input i {
+            font-size: 30px;
+            line-height: 50px;
+            vertical-align: text-bottom;
+            margin-left: 10px;
+            cursor: pointer;
+        }
+
+        .input i:hover {
+            color: #f40;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div>
+    </div>
+    <div class="tit6">智能对话系统</div>
+    <div class="chat-container">
+    </div>
+    <div class="loading" style="display: none;">
+        <i class="layui-icon layui-icon-loading layui-anim layui-anim-rotate layui-anim-loop"
+            style="font-size: 30px;"></i>
+        <div>内容生成中</div>
+    </div>
+    <div class="input">
+        <input type="text" placeholder="请输入你的问题">
+        <i class="layui-icon layui-icon-release"></i>
+    </div>
+    <script>
+        $(function () {
+            $(".loading").hide();
+        })
+        $(document).keydown(function (event) {
+            if (event.keyCode == 13) {
+                $(".layui-icon-release:last").click();
+                return false;
+            }
+        });
+        $('.layui-icon-release').click(function () {
+            var question = $(this).prev('input').val()
+            if (!question) {
+                layer.msg("请输入问题");
+                return;
+            }
+            //$('.input').attr("disabled","disabled");
+            var that = this;
+            var html = '<div class="request chat-content">' +
+                '<div class="chat-box clearfix">' +
+                '<div class="head-img">' +
+                '<img src="./static/1.png" alt="">' +
+                '</div>' +
+                '<p class="content-val">' +
+                question +
+                '</p>' +
+                '</div>' +
+                '</div>'
+            $('.chat-container').append(html)
+            var answerhtml = '<div class="response chat-content">' +
+                '<div class="chat-box clearfix">' +
+                '<div class="head-img">' +
+                '<img src="./static/3.png" alt="">' +
+                '</div>' +
+                '<p class="content-val" style="color:#17a05d;">' +
+                '</p>' +
+                '</div>' +
+                '</div>'
+            $('.chat-container').append(answerhtml)
+            $(".loading").show();
+            $(this).prev('input').val('')
+            var source = new EventSource('http://127.0.0.1:8000/chat?question=' + question);
+            var div = $(".content-val:last");
+            source.onopen = function (event) {
+                console.log('Connection open ...')
+            };
+
+            source.onerror = function (event) {
+                console.log('Connection close ...')
+                source.close();
+                $(".loading").hide();
+
+            };
+            source.onmessage = function (event) {
+                if (event.data.indexOf("<br/>") > -1) {
+                    move();
+                }
+                console.log(event.data)
+                div.html(div.html() + event.data);
+            };
+            function move() {
+                const div = $(".input")[0];
+                const divHeight = div.offsetHeight;
+                const divTop = div.offsetTop;
+                const windowHeight = window.innerHeight;
+                const distanceToBottom = windowHeight - (divTop + divHeight);
+                if (distanceToBottom <= 10) {
+                    window.scrollTo(0, divTop);
+                }
+            }
+
+
+        })
+    </script>
